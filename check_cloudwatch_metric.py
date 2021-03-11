@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
+"""
+check_cloudwatch_metric.py
+
+An Icinga/Nagios plug-in to check cloudwatch metrics
+
+Author: Frank Wittig <frank@e5k.de>
+Source: https://github.com/elias5000/check_cloudwatch_metric
+"""
 
 import sys
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from datetime import datetime, timedelta
 
 import boto3
@@ -13,6 +21,9 @@ STATE_UNKNOWN = 3
 
 
 class Metric:
+    """ CloudWatch metric object """
+
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, **kwargs):
         self.dimensions = kwargs.get('dimensions')
         self.last_state = kwargs.get('last_state')
@@ -154,21 +165,29 @@ def compare(value, warn, crit):
 
 
 def main():
-    parser = ArgumentParser()
+    """ CLI user interface """
+    parser = ArgumentParser(
+        formatter_class=RawDescriptionHelpFormatter,
+        epilog="""\
+thresholds and ranges:
+  Threshold ranges are in Nagios format:
+  https://nagios-plugins.org/doc/guidelines.html#THRESHOLDFORMAT\
+"""
+    )
     required = parser.add_argument_group('required arguments')
-    required.add_argument('--name', help='Metric name (e.g. CPUUtilization)', required=True)
-    required.add_argument('--namespace', help='Metric namespace (e.g. EC2)', required=True)
-    required.add_argument('--warning', help='Warning threshold', required=True)
-    required.add_argument('--critical', help='Critical threshold', required=True)
+    required.add_argument('--name', help='metric name (e.g. CPUUtilization)', required=True)
+    required.add_argument('--namespace', help='metric namespace (e.g. EC2)', required=True)
+    required.add_argument('--warning', help='warning threshold', required=True)
+    required.add_argument('--critical', help='critical threshold', required=True)
 
     parser.add_argument('--dimensions',
-                        help='Metric dimensions in form "Name1:Value1,Name2:Value2"')
-    parser.add_argument('--last_state', help='Use last known value', action='store_true')
-    parser.add_argument('--minutes', help='Time window to aggregate for statistic', default='5')
-    parser.add_argument('--prefix', help='Metric namespace prefix (default: AWS)', default='AWS')
+                        help='metric dimensions in form "Name1:Value1,Name2:Value2"')
+    parser.add_argument('--last_state', help='use last known value', action='store_true')
+    parser.add_argument('--minutes', help='time window to aggregate for statistic', default='5')
+    parser.add_argument('--prefix', help='metric namespace prefix (default: AWS)', default='AWS')
     parser.add_argument('--region', help='AWS region name', default='eu-central-1')
     parser.add_argument('--statistics',
-                        help='Statistics to compare (Default: Average)', default='Average')
+                        help='statistics to compare (default: Average)', default='Average')
 
     args = parser.parse_args()
 
