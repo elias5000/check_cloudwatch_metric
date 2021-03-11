@@ -2,10 +2,31 @@
 
 Icinga/Nagios check to test an AWS CloudFormation metric against thresholds.
 
+
 ## Required Modules
 * boto3
 
-## Usage
+
+## Installation
+    # Checkout source
+    git clone https://github.com/elias5000/check_cloudwatch_metric.git
+    
+    # Install boto3 Python module
+    pip install boto3
+
+    # Copy check script
+    cp check_cloudwatch_metric.py /usr/lib/nagios/plugins/check_cloudwatch_metric.py
+    
+    # Copy director config
+    cp check_cloudwatch_metric.conf /etc/icinga2/conf.d/check_cloudwatch_metric.conf
+    
+
+## Authentication
+Authentication is identical to awscli. Use either instance role EC2 or pod role on K8S
+with kube2iam (preferred) or ~/.aws/config profile. The check will use the default profile.
+
+
+## Commandline Usage
     usage: check_cloudwatch_metric.py [-h] --name NAME --namespace NAMESPACE
                                       --warning WARNING --critical CRITICAL
                                       [--dimensions DIMENSIONS] [--last_state]
