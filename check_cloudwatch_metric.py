@@ -13,6 +13,7 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from datetime import datetime, timedelta
 
 import boto3
+from botocore.exceptions import NoCredentialsError
 
 STATE_OK = 0
 STATE_WARN = 1
@@ -78,13 +79,18 @@ class Metric:
         if metric is None:
             metric = self.get_metric()
 
-        statistics = metric.get_statistics(
-            Dimensions=self.get_dimensions(),
-            StartTime=self.start_time(offset),
-            EndTime=self.end_time(offset),
-            Period=300,
-            Statistics=[self.statistics]
-        )
+        try:
+            statistics = metric.get_statistics(
+                Dimensions=self.get_dimensions(),
+                StartTime=self.start_time(offset),
+                EndTime=self.end_time(offset),
+                Period=300,
+                Statistics=[self.statistics]
+            )
+        except NoCredentialsError:
+            print("UNKNOWN - No credentials found in environment")
+            sys.exit(STATE_UNKNOWN)
+
         if not statistics['Datapoints'] and self.last_state:
             statistics = self.get_statistics(metric, offset + 1)
 
@@ -141,9 +147,9 @@ def compare_range(value, window):
 
     start = None if start == '~' else float(start)
     stop = None if stop == '~' else float(stop)
-    if start and ((incl and value <= start) or (not incl and value < start)):
+    if start is not None and ((incl and value <= start) or (not incl and value < start)):
         return False
-    if stop and ((incl and value >= stop) or (not incl and value > stop)):
+    if stop is not None and ((incl and value >= stop) or (not incl and value > stop)):
         return False
 
     return True
@@ -202,7 +208,7 @@ thresholds and ranges:
         statistics=args.statistics
     )
     value = metric.get_current_value()
-    if not value:
+    if value is None:
         print("UNKNOWN - No value returned from AWS")
         sys.exit(STATE_UNKNOWN)
 
