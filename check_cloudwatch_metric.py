@@ -13,7 +13,7 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from datetime import datetime, timedelta
 
 import boto3
-from botocore.exceptions import NoCredentialsError
+from botocore.exceptions import BotoCoreError
 
 STATE_OK = 0
 STATE_WARN = 1
@@ -87,8 +87,8 @@ class Metric:
                 Period=300,
                 Statistics=[self.statistics]
             )
-        except NoCredentialsError:
-            print("UNKNOWN - No credentials found in environment")
+        except BotoCoreError as err:
+            print("UNKNOWN - {}".format(err))
             sys.exit(STATE_UNKNOWN)
 
         if not statistics['Datapoints'] and self.last_state:
