@@ -13,7 +13,7 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from datetime import datetime, timedelta
 
 import boto3
-from botocore.exceptions import BotoCoreError
+from botocore.exceptions import BotoCoreError, ClientError
 
 STATE_OK = 0
 STATE_WARN = 1
@@ -87,7 +87,7 @@ class Metric:
                 Period=300,
                 Statistics=[self.statistics]
             )
-        except BotoCoreError as err:
+        except (BotoCoreError, ClientError) as err:
             print("UNKNOWN - {}".format(err))
             sys.exit(STATE_UNKNOWN)
 
