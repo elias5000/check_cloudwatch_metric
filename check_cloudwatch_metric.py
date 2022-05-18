@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 check_cloudwatch_metric.py
 
@@ -32,6 +32,7 @@ class Metric:
         self.name = kwargs.get('name')
         self.namespace = kwargs.get('namespace')
         self.prefix = kwargs.get('prefix', 'AWS')
+        self.profile = kwargs.get('profile')
         self.region = kwargs.get('region', 'eu-central-1')
         self.statistics = kwargs.get('statistics')
 
@@ -40,6 +41,9 @@ class Metric:
         Return cloudwatch client for region
         :return:
         """
+        if self.profile:
+            return boto3.session.Session(
+                region_name=self.region, profile_name=self.profile).resource('cloudwatch')
         return boto3.session.Session(region_name=self.region).resource('cloudwatch')
 
     def get_metric(self):
@@ -47,7 +51,7 @@ class Metric:
         Return metric resource by name
         :return:
         """
-        return self.get_client().Metric("{}/{}".format(self.prefix, self.namespace), self.name)
+        return self.get_client().Metric(f'{self.prefix}/{self.namespace}', self.name)
 
     def get_dimensions(self):
         """
@@ -88,7 +92,7 @@ class Metric:
                 Statistics=[self.statistics]
             )
         except (BotoCoreError, ClientError) as err:
-            print("UNKNOWN - {}".format(err))
+            print(f'UNKNOWN - {err}')
             sys.exit(STATE_UNKNOWN)
 
         if not statistics['Datapoints'] and self.last_state:
@@ -191,6 +195,7 @@ thresholds and ranges:
     parser.add_argument('--last_state', help='use last known value', action='store_true')
     parser.add_argument('--minutes', help='time window to aggregate for statistic', default='5')
     parser.add_argument('--prefix', help='metric namespace prefix (default: AWS)', default='AWS')
+    parser.add_argument('--profile', help='AWS config profile')
     parser.add_argument('--region', help='AWS region name', default='eu-central-1')
     parser.add_argument('--statistics',
                         help='statistics to compare (default: Average)', default='Average')
@@ -204,6 +209,7 @@ thresholds and ranges:
         name=args.name,
         namespace=args.namespace,
         prefix=args.prefix,
+        profile=args.profile,
         region=args.region,
         statistics=args.statistics
     )
@@ -214,11 +220,11 @@ thresholds and ranges:
 
     status = compare(value, args.warning, args.critical)
     if status == STATE_OK:
-        print("OK - Value of {} is within boundaries".format(value))
+        print(f'OK - Value of {value} is within boundaries')
     elif status == STATE_WARN:
-        print("WARNING - Value of {} triggers warning threshold".format(value))
+        print(f'WARNING - Value of {value} triggers warning threshold')
     else:
-        print("CRITICAL - Value of {} triggers alarm threshold".format(value))
+        print(f'CRITICAL - Value of {value} triggers alarm threshold')
 
     sys.exit(status)
 
