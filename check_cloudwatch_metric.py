@@ -51,7 +51,9 @@ class Metric:
         Return metric resource by name
         :return:
         """
-        return self.get_client().Metric(f'{self.prefix}/{self.namespace}', self.name)
+        if self.prefix:
+            return self.get_client().Metric(f'{self.prefix}/{self.namespace}', self.name)
+        return self.get_client().Metric(self.namespace, self.name)
 
     def get_dimensions(self):
         """

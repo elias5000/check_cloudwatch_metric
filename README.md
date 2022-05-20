@@ -40,6 +40,7 @@ with kube2iam (preferred) or ~/.aws/config profile. The check will use the defau
       --last_state          use last known value
       --minutes MINUTES     time window to aggregate for statistic
       --prefix PREFIX       metric namespace prefix (default: AWS)
+      --profile PROFILE     AWS config profile
       --region REGION       AWS region name
       --statistics STATISTICS
                             statistics to compare (default: Average)
